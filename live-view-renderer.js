@@ -23,8 +23,19 @@ export class LiveViewRenderer {
                 zoom: 20,
                 rotation: Math.PI / 4,
                 pitch: Math.PI / 3,
+                minPitch: 0.25,
+                maxPitch: 1.3,
                 focusedPlayerId: null,
-                update: () => {} // Mock update
+                update: () => {}, // Mock update
+                rotate: function(deltaX, deltaY = 0) {
+                    const yawSensitivity = 0.005;
+                    const pitchSensitivity = 0.005;
+                    this.rotation -= deltaX * yawSensitivity;
+                    if (deltaY !== 0) {
+                        this.pitch += deltaY * pitchSensitivity;
+                        this.pitch = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitch));
+                    }
+                }
             },
             settings: {
                 visuals: {
@@ -39,6 +50,11 @@ export class LiveViewRenderer {
 
         this.state = null;
         this.animationFrameId = null;
+        
+        // Drag state
+        this.isMiddleDragging = false;
+        this.lastDragX = 0;
+        this.lastDragY = 0;
 
         // Handle resizing
         this.resizeObserver = new ResizeObserver(() => {
@@ -58,6 +74,33 @@ export class LiveViewRenderer {
                 this.mockGame.camera.zoom = Math.min(60, this.mockGame.camera.zoom + zoomStep);
             }
         }, { passive: false });
+        
+        // Camera rotation via middle mouse drag
+        this.container.addEventListener('mousedown', (e) => {
+            if (e.button === 1) { // middle mouse
+                e.preventDefault();
+                this.isMiddleDragging = true;
+                this.lastDragX = e.clientX;
+                this.lastDragY = e.clientY;
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (e.button === 1) {
+                this.isMiddleDragging = false;
+            }
+        });
+
+        this.container.addEventListener('mousemove', (e) => {
+            if (!this.isMiddleDragging) return;
+            e.preventDefault();
+            const dxPixels = e.clientX - this.lastDragX;
+            const dyPixels = e.clientY - this.lastDragY;
+            this.lastDragX = e.clientX;
+            this.lastDragY = e.clientY;
+
+            this.mockGame.camera.rotate(dxPixels, dyPixels);
+        });
     }
 
     setViewMode(mode) {
@@ -76,6 +119,7 @@ export class LiveViewRenderer {
 
     updateState(newState) {
         this.state = newState;
+        this.mapDataChanged = true;
     }
 
     renderLoop() {
@@ -105,6 +149,12 @@ export class LiveViewRenderer {
             this.mockGame.map.heightGrid = mapChunk.heightGrid;
         } else {
             this.mockGame.map.heightGrid = Array(chunkHeight).fill(0).map(() => Array(chunkWidth).fill(0));
+        }
+
+        // Signal terrain renderer to update vertices if map data changed
+        if (this.mapDataChanged) {
+            this.mockGame.map.needs3DUpdate = true;
+            this.mapDataChanged = false;
         }
 
         const originX = mapChunk.origin.x;

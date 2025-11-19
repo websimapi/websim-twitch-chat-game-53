@@ -8,7 +8,8 @@ export class Terrain3D {
 
     update(map) {
         // Optimization: Only update terrain if strictly necessary (init or dimensions change)
-        if (this.mesh && 
+        // If needs3DUpdate is set, we proceed to update vertices
+        if (!map.needs3DUpdate && this.mesh && 
             this.mesh.geometry.parameters.width === map.width && 
             this.mesh.geometry.parameters.height === map.height) {
             
@@ -21,6 +22,25 @@ export class Terrain3D {
                 this.mesh.material.map = tex;
                 this.mesh.material.needsUpdate = true;
             }
+            return;
+        }
+
+        // If dimensions match but we need an update (e.g. live view scrolling), update vertices in place
+        if (map.needs3DUpdate && this.mesh &&
+            this.mesh.geometry.parameters.width === map.width &&
+            this.mesh.geometry.parameters.height === map.height) {
+            
+            const positions = this.mesh.geometry.attributes.position;
+            for (let y = 0; y < map.height; y++) {
+                for (let x = 0; x < map.width; x++) {
+                    const index = y * (map.width) + x;
+                    const h = map.getHeight(x, y);
+                    positions.setZ(index, h);
+                }
+            }
+            positions.needsUpdate = true;
+            this.mesh.geometry.computeVertexNormals();
+            map.needs3DUpdate = false;
             return;
         }
 
