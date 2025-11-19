@@ -66,30 +66,23 @@ export class Game {
         }, { passive: false });
 
         // NEW: middle mouse drag handlers for camera panning
-        this.container.addEventListener('mousedown', (e) => {
-            if (e.button === 1) { // middle mouse
-                e.preventDefault();
-                this.isMiddleDragging = true;
-                this.lastDragX = e.clientX;
-                this.lastDragY = e.clientY;
-            }
+        this.container.addEventListener('mousemove', (e) => {
+            if (!this.isMiddleDragging) return;
+            const dxPixels = e.clientX - this.lastDragX;
+            const dyPixels = e.clientY - this.lastDragY;
+            this.lastDragX = e.clientX;
+            this.lastDragY = e.clientY;
+
+            // Rotate camera based on horizontal drag
+            this.camera.rotate(dxPixels);
+            // NEW: adjust camera elevation (up/down rotation) based on vertical drag
+            this.camera.adjustElevation(dyPixels);
         });
 
         window.addEventListener('mouseup', (e) => {
             if (e.button === 1) {
                 this.isMiddleDragging = false;
             }
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!this.isMiddleDragging) return;
-            const dxPixels = e.clientX - this.lastDragX;
-            // const dyPixels = e.clientY - this.lastDragY; // Vertical drag ignored for rotation
-            this.lastDragX = e.clientX;
-            this.lastDragY = e.clientY;
-
-            // Rotate camera based on horizontal drag
-            this.camera.rotate(dxPixels);
         });
 
         this.saveInterval = setInterval(async () => {

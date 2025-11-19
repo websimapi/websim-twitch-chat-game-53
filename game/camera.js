@@ -20,6 +20,15 @@ export class Camera {
 
         // Rotation (Azimuth)
         this.rotation = Math.PI / 4; // 45 degrees default
+
+        // NEW: orbital distance and elevation (height) for 3D camera
+        this.distance = 20;
+        this.elevation = 20;
+        this.minElevation = 5;
+        this.maxElevation = 40;
+
+        // NEW: vertical offset of the look-at target so the player appears centered
+        this.targetHeightOffset = 1.0;
     }
 
     setFocus(playerId) {
@@ -45,6 +54,14 @@ export class Camera {
     rotate(deltaX) {
         const sensitivity = 0.005;
         this.rotation -= deltaX * sensitivity;
+    }
+
+    // NEW: adjust camera elevation (up/down rotation) around the target
+    adjustElevation(deltaY) {
+        const sensitivity = 0.1;
+        // Dragging up (negative deltaY) should raise the camera (increase elevation)
+        this.elevation -= deltaY * sensitivity;
+        this.elevation = Math.max(this.minElevation, Math.min(this.maxElevation, this.elevation));
     }
 
     // NEW: adjust pan offset in world units

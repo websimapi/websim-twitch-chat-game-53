@@ -102,8 +102,9 @@ export class ThreeRenderer {
         const rot = cam.rotation;
 
         // Distance and elevation for the isometric look
-        const dist = 20;
-        const elevation = 20;
+        // Use camera-configurable values with sensible fallbacks
+        const dist = cam.distance || 20;
+        const elevation = cam.elevation || 20;
 
         // Calculate offset based on rotation
         const offsetX = dist * Math.sin(rot);
@@ -112,7 +113,10 @@ export class ThreeRenderer {
         // Set position: target + offset
         this.camera.position.set(x + offsetX, elevation, z + offsetZ);
         this.camera.up.set(0, 1, 0); // Ensure Y is up
-        this.camera.lookAt(x, 0, z);
+
+        // Look slightly above ground so the focused player appears closer to screen center
+        const lookAtY = cam.targetHeightOffset !== undefined ? cam.targetHeightOffset : 1.0;
+        this.camera.lookAt(x, lookAtY, z);
 
         // Update shadow light to follow camera target but keep consistent direction relative to world
         // We keep the light coming from a fixed "South-East" direction relative to the map
