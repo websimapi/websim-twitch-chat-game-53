@@ -102,23 +102,44 @@ export class ThreeRenderer {
         const rot = cam.rotation;
         const pitch = cam.pitch || Math.PI / 3;
 
-        // Distance from target for the isometric-style orbit
-        const dist = 20;
+        // Determine target height (player if focused, otherwise terrain)
+        let targetY = 0;
+        if (cam.focusedPlayerId && game.players && game.players.has(cam.focusedPlayerId)) {
+            const p = game.players.get(cam.focusedPlayerId);
+            // Player z is terrain height; add a bit so we look at torso/head
+            const playerZ = p.z || 0;
+            targetY = playerZ + 1.0;
+        } else if (game.map && typeof game.map.getHeight === 'function') {
+            const groundH = game.map.getHeight(x, z) || 0;
+            targetY = groundH + 0.5;
+        }
+
+        // Distance from target for the orbit (scaled with zoom for better 3rd‑person feel)
+        const baseDist = 18;
+        const zoomFactor = cam.zoom / 20; // 20 is our default view height
+        const dist = Math.min(40, Math.max(6, baseDist * zoomFactor));
 
         // Spherical to Cartesian: pitch from horizontal plane
         const horizontalRadius = dist * Math.cos(pitch);
         const offsetY = dist * Math.sin(pitch);
+
         const offsetX = horizontalRadius * Math.sin(rot);
         const offsetZ = horizontalRadius * Math.cos(rot);
 
-        // Set position: target + offset
-        this.camera.position.set(x + offsetX, offsetY, z + offsetZ);
-        this.camera.up.set(0, 1, 0); // Ensure Y is up
-        this.camera.lookAt(x, 0, z);
+        // Set position: target + offset, raised slightly
+        this.camera.position.set(
+            x + offsetX,
+            targetY + offsetY,
+            z + offsetZ
+        );
+        this.camera.up.set(0, 1, 0);
+
+        // Always look directly at the target point (player/terrain)
+        this.camera.lookAt(x, targetY, z);
 
         // Update shadow light to follow camera target but keep consistent direction relative to world
-        this.dirLight.position.set(x + 20, 50, z + 20);
-        this.dirLight.target.position.set(x, 0, z);
+        this.dirLight.position.set(x + 20, targetY + 30, z + 20);
+        this.dirLight.target.position.set(x, targetY, z);
         this.dirLight.target.updateMatrixWorld();
     }
 
