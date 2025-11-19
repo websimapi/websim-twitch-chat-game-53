@@ -487,17 +487,60 @@ export class ThreeRenderer {
                 const tile = map.grid[y][x];
                 if (tile === TILE_TYPE.GRASS) continue; // Skip empty tiles
 
-                const z = map.getHeight(x + 0.5, y + 0.5);
-                
+                // Compute a base height that keeps sprite bottoms above sloped terrain
+                // Sample corners of the tile and use the maximum height plus a tiny offset
+                const h00 = map.getHeight(x,     y);
+                const h10 = map.getHeight(x + 1, y);
+                const h01 = map.getHeight(x,     y + 1);
+                const h11 = map.getHeight(x + 1, y + 1);
+                const maxH = Math.max(h00, h10, h01, h11);
+                const baseZ = maxH + 0.02; // small lift to avoid z-fighting/clipping
+
                 if (tile === TILE_TYPE.TREE) {
-                    // Anchored at bottom, so we place exactly at z
-                    this.createOrUpdateSprite(`t_${x}_${y}`, 'tree', x + 0.5, y + 0.5, z, map.treeTile, 1.5);
+                    // Trees are tall billboards; anchor at baseZ so trunks never sink into slopes
+                    this.createOrUpdateSprite(
+                        `t_${x}_${y}`,
+                        'tree',
+                        x + 0.5,
+                        y + 0.5,
+                        baseZ,
+                        map.treeTile,
+                        1.5
+                    );
                 } else if (tile === TILE_TYPE.LOGS) {
-                    this.createOrUpdateSprite(`l_${x}_${y}`, 'logs', x + 0.5, y + 0.5, z, map.logsTile, 1);
+                    // Logs are low; slight lift to avoid clipping on slopes, but smaller than trees
+                    const logsZ = baseZ; 
+                    this.createOrUpdateSprite(
+                        `l_${x}_${y}`,
+                        'logs',
+                        x + 0.5,
+                        y + 0.5,
+                        logsZ,
+                        map.logsTile,
+                        1
+                    );
                 } else if (tile === TILE_TYPE.BUSHES) {
-                    this.createOrUpdateSprite(`b_${x}_${y}`, 'bushes', x + 0.5, y + 0.5, z, map.bushesTile, 1);
+                    const bushesZ = baseZ;
+                    this.createOrUpdateSprite(
+                        `b_${x}_${y}`,
+                        'bushes',
+                        x + 0.5,
+                        y + 0.5,
+                        bushesZ,
+                        map.bushesTile,
+                        1
+                    );
                 } else if (tile === TILE_TYPE.FLOWER_PATCH) {
-                     this.createOrUpdateSprite(`f_${x}_${y}`, 'flowers', x + 0.5, y + 0.5, z, map.flowerPatchTile, 0.8);
+                     const flowersZ = baseZ;
+                     this.createOrUpdateSprite(
+                        `f_${x}_${y}`,
+                        'flowers',
+                        x + 0.5,
+                        y + 0.5,
+                        flowersZ,
+                        map.flowerPatchTile,
+                        0.8
+                     );
                 }
             }
         }
