@@ -96,31 +96,27 @@ export class ThreeRenderer {
         this.camera.bottom = -viewHeight / 2;
         this.camera.updateProjectionMatrix();
 
-        // Position camera based on target (cam.x, cam.y) and rotation
+        // Position camera based on target (cam.x, cam.y) and rotation/pitch
         const x = cam.x;
         const z = cam.y; // Game Y is 3D Z
         const rot = cam.rotation;
+        const pitch = cam.pitch || Math.PI / 3;
 
-        // Distance and elevation for the isometric look
-        // Use camera-configurable values with sensible fallbacks
-        const dist = cam.distance || 20;
-        const elevation = cam.elevation || 20;
+        // Distance from target for the isometric-style orbit
+        const dist = 20;
 
-        // Calculate offset based on rotation
-        const offsetX = dist * Math.sin(rot);
-        const offsetZ = dist * Math.cos(rot);
+        // Spherical to Cartesian: pitch from horizontal plane
+        const horizontalRadius = dist * Math.cos(pitch);
+        const offsetY = dist * Math.sin(pitch);
+        const offsetX = horizontalRadius * Math.sin(rot);
+        const offsetZ = horizontalRadius * Math.cos(rot);
 
         // Set position: target + offset
-        this.camera.position.set(x + offsetX, elevation, z + offsetZ);
+        this.camera.position.set(x + offsetX, offsetY, z + offsetZ);
         this.camera.up.set(0, 1, 0); // Ensure Y is up
-
-        // Look slightly above ground so the focused player appears closer to screen center
-        const lookAtY = cam.targetHeightOffset !== undefined ? cam.targetHeightOffset : 1.0;
-        this.camera.lookAt(x, lookAtY, z);
+        this.camera.lookAt(x, 0, z);
 
         // Update shadow light to follow camera target but keep consistent direction relative to world
-        // We keep the light coming from a fixed "South-East" direction relative to the map
-        // so shadows don't spin wildly when rotating the camera.
         this.dirLight.position.set(x + 20, 50, z + 20);
         this.dirLight.target.position.set(x, 0, z);
         this.dirLight.target.updateMatrixWorld();

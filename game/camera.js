@@ -21,14 +21,11 @@ export class Camera {
         // Rotation (Azimuth)
         this.rotation = Math.PI / 4; // 45 degrees default
 
-        // NEW: orbital distance and elevation (height) for 3D camera
-        this.distance = 20;
-        this.elevation = 20;
-        this.minElevation = 5;
-        this.maxElevation = 40;
-
-        // NEW: vertical offset of the look-at target so the player appears centered
-        this.targetHeightOffset = 1.0;
+        // NEW: vertical orbit angle (pitch)
+        // Measured from the horizontal plane: 0 = flat, PI/2 = straight down
+        this.pitch = Math.PI / 3;      // ~60 degrees down-tilt
+        this.minPitch = 0.25;          // ~14 degrees (avoid too flat)
+        this.maxPitch = 1.3;           // ~75 degrees (avoid straight down)
     }
 
     setFocus(playerId) {
@@ -50,30 +47,32 @@ export class Camera {
         console.log(`Camera zoom (view height): ${this.zoom}`);
     }
 
-    // Rotate camera around the target
-    rotate(deltaX) {
-        const sensitivity = 0.005;
-        this.rotation -= deltaX * sensitivity;
+    // Rotate camera around the target (yaw + optional pitch)
+    rotate(deltaX, deltaY = 0) {
+        const yawSensitivity = 0.005;
+        const pitchSensitivity = 0.005;
+
+        // Horizontal orbit (yaw)
+        this.rotation -= deltaX * yawSensitivity;
+
+        // Vertical orbit (pitch)
+        if (deltaY !== 0) {
+            // Dragging up (negative deltaY) should look more down at the target (increase pitch)
+            this.pitch += (-deltaY) * pitchSensitivity;
+            // Clamp pitch to avoid flipping or going too flat
+            this.pitch = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitch));
+        }
     }
 
-    // NEW: adjust camera elevation (up/down rotation) around the target
-    adjustElevation(deltaY) {
-        const sensitivity = 0.1;
-        // Dragging up (negative deltaY) should raise the camera (increase elevation)
-        this.elevation -= deltaY * sensitivity;
-        this.elevation = Math.max(this.minElevation, Math.min(this.maxElevation, this.elevation));
-    }
-
+    // (Optional) old pan helpers are no longer used but kept for compatibility
     // NEW: adjust pan offset in world units
     addPan(dxWorld, dyWorld) {
-        this.panOffsetX += dxWorld;
-        this.panOffsetY += dyWorld;
+        // Deprecated: camera now orbits around the target instead of panning.
     }
 
     // Optional helper if we ever want to reset pan
     resetPan() {
-        this.panOffsetX = 0;
-        this.panOffsetY = 0;
+        // Deprecated: camera now orbits around the target instead of panning.
     }
 
     update(deltaTime) {
