@@ -83,12 +83,13 @@ export class Entities3D {
         mesh.position.set(x, z + yOffset, y); 
         mesh.scale.set(scale, scale, scale);
 
-        // Y-Axis Billboard Rotation
-        // mesh.lookAt(this.renderer.camera.position.x, mesh.position.y, this.renderer.camera.position.z);
-        const camPos = this.renderer.camera.position;
-        const dx = camPos.x - mesh.position.x;
-        const dz = camPos.z - mesh.position.z;
-        mesh.rotation.set(0, Math.atan2(dx, dz), 0);
+        // Fixed world-space orientation (no camera-facing rotation to avoid "arcing in")
+        // Trees can have a slight angle if desired; others stay axis-aligned.
+        if (type === 'tree') {
+            mesh.rotation.set(0, Math.PI * 0.1, 0);
+        } else {
+            mesh.rotation.set(0, 0, 0);
+        }
 
         mesh.userData.lastFrameId = frameId;
     }
