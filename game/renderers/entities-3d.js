@@ -136,35 +136,28 @@ export class Entities3D {
         }
 
         if (renderKind === 'ground') {
-            // Conform the quad to the terrain height mesh:
-            // sample height at each corner of the 1x1 tile area, slightly inset so it
-            // stays visually inside the tile and hugs the mesh without hovering.
+            // Conform the quad exactly to the terrain height mesh:
+            // sample height at each corner of the 1x1 tile area.
             const posAttr = mesh.geometry.attributes.position;
             const vertexCount = posAttr.count;
-            const yOffset = 0.01; // very small lift to avoid z-fighting with terrain
-            const insetFactor = 0.9; // keep quad slightly inside the tile bounds
+            const yOffset = 0.0; // no artificial lift – sits directly on the terrain mesh
 
             for (let i = 0; i < vertexCount; i++) {
-                let localX = posAttr.getX(i); // in range [-0.5, 0.5]
-                let localZ = posAttr.getZ(i); // in range [-0.5, 0.5]
-
-                // Slightly inset the quad so edge vertices don't hang off steep borders
-                localX *= insetFactor;
-                localZ *= insetFactor;
-
+                const localX = posAttr.getX(i); // in range [-0.5, 0.5]
+                const localZ = posAttr.getZ(i); // in range [-0.5, 0.5]
                 const worldX = x + localX;
                 const worldZ = y + localZ;
 
                 const terrainH = map.getHeight(worldX, worldZ) + yOffset;
                 posAttr.setY(i, terrainH);
-                posAttr.setX(i, localX);
-                posAttr.setZ(i, localZ);
             }
             posAttr.needsUpdate = true;
             mesh.geometry.computeVertexNormals();
 
-            // Ground mesh position: center over the tile in XZ, Y handled in vertices
+            // Ground mesh position: center over the tile in XZ, Y is encoded in vertices
             mesh.position.set(x, 0, y);
+            // Scale in X/Z only; Y comes from vertex heights
+            mesh.scale.set(scale, 1, scale);
         } else {
             // Position:
             // X/Z are map coordinates, Y is height from terrain
@@ -174,6 +167,8 @@ export class Entities3D {
             }
 
             mesh.position.set(x, height + yOffset, y);
+
+            // Standing sprites use uniform scale
             mesh.scale.set(scale, scale, scale);
 
             // Orientation:
@@ -183,11 +178,6 @@ export class Entities3D {
             } else {
                 mesh.rotation.set(0, 0, 0);
             }
-        }
-
-        // For standing sprites, ensure scale is set (ground quads use native 1x1 tile size)
-        if (renderKind === 'standing') {
-            mesh.scale.set(scale, scale, scale);
         }
 
         mesh.userData.lastFrameId = frameId;
