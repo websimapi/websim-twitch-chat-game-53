@@ -43,6 +43,7 @@ export class Game {
         
         this.assets = {}; 
         this.generatedAssets = [];
+        this.assetTypes = {}; // New: per-asset render types
 
         this.room = null;
         this.pendingLinks = new Map();
@@ -93,7 +94,15 @@ export class Game {
         });
 
         this.saveInterval = setInterval(async () => {
-            await StorageManager.saveGameState(this.channel, this.worldName, this.players, this.map, this.assets, this.generatedAssets);
+            await StorageManager.saveGameState(
+                this.channel,
+                this.worldName,
+                this.players,
+                this.map,
+                this.assets,
+                this.generatedAssets,
+                this.assetTypes
+            );
         }, 5000);
     }
 
@@ -104,6 +113,7 @@ export class Game {
 
         this.assets = gameState.assets || {};
         this.generatedAssets = gameState.assetsGenerated || [];
+        this.assetTypes = gameState.assetTypes || {};
 
         if (gameState.map && gameState.map.grid && gameState.map.grid.length > 0) {
             this.map.grid = gameState.map.grid;
