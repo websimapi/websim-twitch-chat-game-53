@@ -94,7 +94,8 @@ export class Game {
             const viewWidthWorld = viewHeightWorld * aspect;
 
             const dxWorld = -(dxPixels / window.innerWidth) * viewWidthWorld;
-            const dyWorld = (dyPixels / window.innerHeight) * viewHeightWorld;
+            // Invert vertical direction so dragging the mouse moves the view in the same direction
+            const dyWorld = -(dyPixels / window.innerHeight) * viewHeightWorld;
 
             this.camera.addPan(dxWorld, dyWorld);
         });
