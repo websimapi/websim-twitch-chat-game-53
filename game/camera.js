@@ -18,9 +18,8 @@ export class Camera {
         this.minZoom = 5;
         this.maxZoom = 60;
 
-        // NEW: manual pan offset (in world/grid units) applied on top of focus
-        this.panOffsetX = 0;
-        this.panOffsetY = 0;
+        // Rotation (Azimuth)
+        this.rotation = Math.PI / 4; // 45 degrees default
     }
 
     setFocus(playerId) {
@@ -40,6 +39,12 @@ export class Camera {
             this.zoom = Math.min(this.maxZoom, this.zoom + zoomStep);
         }
         console.log(`Camera zoom (view height): ${this.zoom}`);
+    }
+
+    // Rotate camera around the target
+    rotate(deltaX) {
+        const sensitivity = 0.005;
+        this.rotation -= deltaX * sensitivity;
     }
 
     // NEW: adjust pan offset in world units
@@ -64,8 +69,8 @@ export class Camera {
         const focusedPlayer = this.focusedPlayerId ? this.players.get(this.focusedPlayerId) : null;
 
         if (focusedPlayer) {
-            const targetX = focusedPlayer.pixelX + this.panOffsetX;
-            const targetY = focusedPlayer.pixelY + this.panOffsetY;
+            const targetX = focusedPlayer.pixelX;
+            const targetY = focusedPlayer.pixelY;
 
             // Smoothly interpolate camera position
             const lerpFactor = 1.0 - Math.exp(-5 * deltaTime); 

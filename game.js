@@ -84,20 +84,12 @@ export class Game {
         window.addEventListener('mousemove', (e) => {
             if (!this.isMiddleDragging) return;
             const dxPixels = e.clientX - this.lastDragX;
-            const dyPixels = e.clientY - this.lastDragY;
+            // const dyPixels = e.clientY - this.lastDragY; // Vertical drag ignored for rotation
             this.lastDragX = e.clientX;
             this.lastDragY = e.clientY;
 
-            // Convert pixel delta to world/grid units based on current view size
-            const aspect = window.innerWidth / window.innerHeight;
-            const viewHeightWorld = this.camera.zoom; // zoom is view height in world units
-            const viewWidthWorld = viewHeightWorld * aspect;
-
-            const dxWorld = -(dxPixels / window.innerWidth) * viewWidthWorld;
-            // Invert vertical direction so dragging the mouse moves the view in the same direction
-            const dyWorld = -(dyPixels / window.innerHeight) * viewHeightWorld;
-
-            this.camera.addPan(dxWorld, dyWorld);
+            // Rotate camera based on horizontal drag
+            this.camera.rotate(dxPixels);
         });
 
         this.saveInterval = setInterval(async () => {

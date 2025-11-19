@@ -92,28 +92,28 @@ export class ThreeRenderer {
         this.camera.bottom = -viewHeight / 2;
         this.camera.updateProjectionMatrix();
 
-        // Position camera
+        // Position camera based on target (cam.x, cam.y) and rotation
         const x = cam.x;
         const z = cam.y; // Game Y is 3D Z
+        const rot = cam.rotation;
 
-        const viewMode = game.settings.visuals.view_mode || '2d';
-        
-        if (viewMode === '2.5d' || viewMode === 'isometric') {
-            // Isometric-ish angle
-            this.camera.position.set(x + 20, 20, z + 20); // Offset
-            this.camera.lookAt(x, 0, z);
-        } else {
-            // Top Down 3D
-            this.camera.position.set(x, 50, z);
-            this.camera.lookAt(x, 0, z);
-            // Rotate Z so 'up' is -Z in game (North)
-            this.camera.rotation.z = 0; 
-            this.camera.up.set(0, 0, -1); 
-            this.camera.lookAt(x, 0, z);
-        }
+        // Distance and elevation for the isometric look
+        const dist = 20;
+        const elevation = 20;
 
-        // Follow shadow light
-        this.dirLight.position.set(x + 20, 50, z + 10);
+        // Calculate offset based on rotation
+        const offsetX = dist * Math.sin(rot);
+        const offsetZ = dist * Math.cos(rot);
+
+        // Set position: target + offset
+        this.camera.position.set(x + offsetX, elevation, z + offsetZ);
+        this.camera.up.set(0, 1, 0); // Ensure Y is up
+        this.camera.lookAt(x, 0, z);
+
+        // Update shadow light to follow camera target but keep consistent direction relative to world
+        // We keep the light coming from a fixed "South-East" direction relative to the map
+        // so shadows don't spin wildly when rotating the camera.
+        this.dirLight.position.set(x + 20, 50, z + 20);
         this.dirLight.target.position.set(x, 0, z);
         this.dirLight.target.updateMatrixWorld();
     }

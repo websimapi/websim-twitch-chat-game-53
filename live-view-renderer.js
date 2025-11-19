@@ -37,7 +37,7 @@ export class LiveViewRenderer {
         this.assets = {};
         this.state = null;
         this.animationFrameId = null;
-        this.viewMode = '2d'; // '2d' or '2.5d'
+        this.viewMode = '2.5d'; // Default to 2.5D isometric view
 
         // Zoom controls (similar to host camera)
         this.baseTileSize = 32;

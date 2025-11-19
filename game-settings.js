@@ -30,7 +30,6 @@ export const DEFAULT_GAME_SETTINGS = {
         water_level: -1, // Not using water yet, but good to have
     },
     visuals: {
-        view_mode: 'isometric', // 'top-down' or 'isometric' (formerly 2d/2.5d)
         render_distance: 30,
         show_target_indicator: true,
         show_hitboxes: false,
