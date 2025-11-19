@@ -191,7 +191,8 @@ export class Players3D {
                 ctx.strokeRect(Math.round(x) + 0.5, Math.round(barY) + 0.5, Math.floor(slotWidth) - 1, barHeight);
 
                 if (i < filledSlots) {
-                    if (i === 0) {
+                    const isLastFilledSlot = (i === filledSlots - 1);
+                    if (isLastFilledSlot) {
                         const width = slotWidth * remainingRatio;
                         const alpha = 0.6 + (energy.flashState || 0) * 0.4;
                         ctx.fillStyle = `rgba(173,216,230,${alpha})`;
