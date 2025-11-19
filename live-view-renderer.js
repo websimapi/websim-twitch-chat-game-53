@@ -137,9 +137,19 @@ export class LiveViewRenderer {
 
         if (viewMode === '2.5d') {
             // Project player center and center camera on that point
-            const projected = project(mainPlayer.pixelX + 0.5, mainPlayer.pixelY + 0.5, 0, viewMode, ts);
+            // Use same projection and visual offset as renderPlayer so the player sphere
+            // is truly centered on screen (its circle is drawn slightly above the ground point).
+            const projected = project(
+                mainPlayer.pixelX + (mainPlayer.offsetX || 0),
+                mainPlayer.pixelY + (mainPlayer.offsetY || 0),
+                mainPlayer.z || 0,
+                viewMode,
+                ts
+            );
+            const radius = ts / 2.5;
+            const sphereCenterY = projected.y - (radius / 2);
             cameraX = projected.x - this.canvas.width / 2;
-            cameraY = projected.y - this.canvas.height / 2;
+            cameraY = sphereCenterY - this.canvas.height / 2;
         } else {
             // 2D top-down
             cameraX = (mainPlayer.pixelX * ts) - (this.canvas.width / 2);
