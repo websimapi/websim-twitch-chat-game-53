@@ -487,60 +487,34 @@ export class ThreeRenderer {
                 const tile = map.grid[y][x];
                 if (tile === TILE_TYPE.GRASS) continue; // Skip empty tiles
 
-                // Compute a base height that keeps sprite bottoms above sloped terrain
-                // Sample corners of the tile and use the maximum height plus a tiny offset
-                const h00 = map.getHeight(x,     y);
-                const h10 = map.getHeight(x + 1, y);
-                const h01 = map.getHeight(x,     y + 1);
-                const h11 = map.getHeight(x + 1, y + 1);
-                const maxH = Math.max(h00, h10, h01, h11);
-                const baseZ = maxH + 0.02; // small lift to avoid z-fighting/clipping
-
+                const z = map.getHeight(x + 0.5, y + 0.5);
+                
                 if (tile === TILE_TYPE.TREE) {
-                    // Trees are tall billboards; anchor at baseZ so trunks never sink into slopes
-                    this.createOrUpdateSprite(
-                        `t_${x}_${y}`,
-                        'tree',
-                        x + 0.5,
-                        y + 0.5,
-                        baseZ,
-                        map.treeTile,
-                        1.5
-                    );
+                    // Calculate slope-adjusted height to prevent clipping into terrain
+                    const h00 = map.getHeight(x, y);
+                    const h10 = map.getHeight(x + 1, y);
+                    const h01 = map.getHeight(x, y + 1);
+                    const h11 = map.getHeight(x + 1, y + 1);
+                    
+                    const maxH = Math.max(h00, h10, h01, h11);
+                    const minH = Math.min(h00, h10, h01, h11);
+                    const diff = maxH - minH;
+                    
+                    // Apply upward correction on slopes
+                    // We bias the position towards the higher ground to prevent the base from clipping into the hill.
+                    let treeZ = z;
+                    if (diff > 0.1) {
+                        treeZ = z + (diff * 0.35); 
+                    }
+
+                    // Anchored at bottom, so we place exactly at adjusted z
+                    this.createOrUpdateSprite(`t_${x}_${y}`, 'tree', x + 0.5, y + 0.5, treeZ, map.treeTile, 1.5);
                 } else if (tile === TILE_TYPE.LOGS) {
-                    // Logs are low; slight lift to avoid clipping on slopes, but smaller than trees
-                    const logsZ = baseZ; 
-                    this.createOrUpdateSprite(
-                        `l_${x}_${y}`,
-                        'logs',
-                        x + 0.5,
-                        y + 0.5,
-                        logsZ,
-                        map.logsTile,
-                        1
-                    );
+                    this.createOrUpdateSprite(`l_${x}_${y}`, 'logs', x + 0.5, y + 0.5, z, map.logsTile, 1);
                 } else if (tile === TILE_TYPE.BUSHES) {
-                    const bushesZ = baseZ;
-                    this.createOrUpdateSprite(
-                        `b_${x}_${y}`,
-                        'bushes',
-                        x + 0.5,
-                        y + 0.5,
-                        bushesZ,
-                        map.bushesTile,
-                        1
-                    );
+                    this.createOrUpdateSprite(`b_${x}_${y}`, 'bushes', x + 0.5, y + 0.5, z, map.bushesTile, 1);
                 } else if (tile === TILE_TYPE.FLOWER_PATCH) {
-                     const flowersZ = baseZ;
-                     this.createOrUpdateSprite(
-                        `f_${x}_${y}`,
-                        'flowers',
-                        x + 0.5,
-                        y + 0.5,
-                        flowersZ,
-                        map.flowerPatchTile,
-                        0.8
-                     );
+                     this.createOrUpdateSprite(`f_${x}_${y}`, 'flowers', x + 0.5, y + 0.5, z, map.flowerPatchTile, 0.8);
                 }
             }
         }
