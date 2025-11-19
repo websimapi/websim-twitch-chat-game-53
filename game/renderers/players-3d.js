@@ -212,12 +212,12 @@ export class Players3D {
         const remaining = player.actionTimer || 0;
         if (total > 0 && remaining > 0) {
             const progress = Math.min(1, Math.max(0, (total - remaining) / total));
-            const radius = 14;
+            const radius = 22;
             const centerX = w * 0.18;
             const centerY = nameY - 6;
 
             ctx.beginPath();
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             ctx.fill();
 
@@ -231,16 +231,16 @@ export class Players3D {
 
             ctx.beginPath();
             ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4;
             ctx.arc(centerX, centerY, radius - 2, startAngle, endAngle);
             ctx.stroke();
 
             const icon = this.getPlayerSkillIcon(player);
             if (icon) {
-                const iconSize = radius * 1.3;
+                const iconSize = 32;
                 const iconX = centerX - iconSize / 2;
                 const iconY = centerY - iconSize / 2;
-                ctx.drawImage(icon, iconX, iconY, iconSize, iconSize);
+                ctx.drawImage(icon, Math.floor(iconX), Math.floor(iconY), iconSize, iconSize);
             }
         }
     }
