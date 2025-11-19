@@ -15,6 +15,7 @@ import { updateActiveChopping } from './game/chopping-manager.js';
 import { initRealtimeHost, sendLiveViewUpdate } from './game/realtime.js';
 import { handlePlayerCommand as handlePlayerCommandImpl } from './game/commands.js';
 import { TILE_TYPE } from './map-tile-types.js';
+import { generateTerrain } from './game/world-generator.js';
 
 export class Game {
     constructor(container, channel, worldName = 'default', hosts = [], settings = DEFAULT_GAME_SETTINGS) {
@@ -127,7 +128,10 @@ export class Game {
                 this.map.heightGrid = Array(this.map.height).fill(0).map(() => Array(this.map.width).fill(0));
             }
         } else {
+            // New world: generate base map and apply terrain settings for height map
             this.map.generateMap();
+            const terrainSettings = this.settings.terrain || DEFAULT_GAME_SETTINGS.terrain;
+            generateTerrain(this.map, terrainSettings);
         }
 
         let hasTree = false;
