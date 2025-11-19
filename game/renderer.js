@@ -11,7 +11,7 @@ export class ThreeRenderer {
         this.scene.background = new THREE.Color(0x87CEEB); // Sky blue background
 
         // Camera will be setup in resize
-        this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
+        this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -500, 2000);
         
         this.renderer = new THREE.WebGLRenderer({ antialias: false }); // False for retro feel
         this.renderer.shadowMap.enabled = true;
