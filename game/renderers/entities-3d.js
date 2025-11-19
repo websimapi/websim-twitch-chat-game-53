@@ -149,8 +149,8 @@ export class Entities3D {
             // sample height at each corner of the 1x1 tile area.
             const posAttr = mesh.geometry.attributes.position;
             const vertexCount = posAttr.count;
-            // No physical lift; rely on polygonOffset for visual layering
-            const yOffset = 0.0; 
+            // Physical lift to assist polygonOffset in preventing Z-fighting
+            const yOffset = 0.05; 
 
             for (let i = 0; i < vertexCount; i++) {
                 const localX = posAttr.getX(i); // in range [-0.5, 0.5]

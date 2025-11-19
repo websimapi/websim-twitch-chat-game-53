@@ -8,17 +8,20 @@ export class Terrain3D {
 
     update(map) {
         // Optimization: Only update terrain if strictly necessary (init or dimensions change)
-        // If needs3DUpdate is set, we proceed to update vertices
+        // We expect dimensions to be map.width - 1 to align vertices with integer coordinates
+        const expectedWidth = map.width - 1;
+        const expectedHeight = map.height - 1;
+
         if (!map.needs3DUpdate && this.mesh && 
-            this.mesh.geometry.parameters.width === map.width && 
-            this.mesh.geometry.parameters.height === map.height) {
+            this.mesh.geometry.parameters.width === expectedWidth && 
+            this.mesh.geometry.parameters.height === expectedHeight) {
             
             // Check if texture needs update
             const tex = this.renderer.getTexture(map.grassTile);
             if (tex && this.mesh.material.map !== tex) {
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
-                tex.repeat.set(map.width, map.height);
+                tex.repeat.set(expectedWidth, expectedHeight);
                 this.mesh.material.map = tex;
                 this.mesh.material.needsUpdate = true;
             }
@@ -27,8 +30,8 @@ export class Terrain3D {
 
         // If dimensions match but we need an update (e.g. live view scrolling), update vertices in place
         if (map.needs3DUpdate && this.mesh &&
-            this.mesh.geometry.parameters.width === map.width &&
-            this.mesh.geometry.parameters.height === map.height) {
+            this.mesh.geometry.parameters.width === expectedWidth &&
+            this.mesh.geometry.parameters.height === expectedHeight) {
             
             const positions = this.mesh.geometry.attributes.position;
             for (let y = 0; y < map.height; y++) {
@@ -51,14 +54,17 @@ export class Terrain3D {
         }
 
         // Geometry: Width, Height, SegmentsW, SegmentsH
-        const geometry = new THREE.PlaneGeometry(map.width, map.height, map.width - 1, map.height - 1);
+        // Use (width-1) as size and segments so that vertices are spaced exactly 1 unit apart
+        // This ensures vertices align with integer grid coordinates, matching object placement logic
+        const geometry = new THREE.PlaneGeometry(expectedWidth, expectedHeight, expectedWidth, expectedHeight);
         
         // Material
         const grassTex = this.renderer.getTexture(map.grassTile);
         if (grassTex) {
             grassTex.wrapS = THREE.RepeatWrapping;
             grassTex.wrapT = THREE.RepeatWrapping;
-            grassTex.repeat.set(map.width, map.height);
+            // Repeat texture 1:1 with grid cells
+            grassTex.repeat.set(expectedWidth, expectedHeight);
         }
         
         const material = new THREE.MeshLambertMaterial({ 
@@ -70,7 +76,8 @@ export class Terrain3D {
         this.mesh.rotation.x = -Math.PI / 2; // Lay flat
         
         // Offset to align top-left of map grid (0,0) with world space 0,0
-        this.mesh.position.set(map.width / 2 - 0.5, 0, map.height / 2 - 0.5);
+        // PlaneGeometry is centered, so we shift by half the size
+        this.mesh.position.set(expectedWidth / 2, 0, expectedHeight / 2);
         this.mesh.receiveShadow = true;
 
         this.renderer.scene.add(this.mesh);
