@@ -400,9 +400,11 @@ export class ThreeRenderer {
         mesh.scale.set(scale, scale, scale);
         
         // Y-Axis Billboard Rotation: Face the camera but stay vertical
-        // This prevents the "tilting back" effect of standard Sprites and keeps the base planted.
-        mesh.lookAt(this.camera.position.x, mesh.position.y, this.camera.position.z);
-        
+        // Trees rotate to face the camera; other props remain fixed to avoid odd spinning.
+        if (type === 'tree') {
+            mesh.lookAt(this.camera.position.x, mesh.position.y, this.camera.position.z);
+        }
+
         // Mark as seen this frame
         mesh.userData.lastFrameId = this.frameId;
     }
