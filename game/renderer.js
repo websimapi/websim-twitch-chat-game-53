@@ -51,6 +51,10 @@ export class ThreeRenderer {
         };
         this.iconsLoaded = false;
         this._loadIcons();
+
+        // Billboard geometry for trees/props (vertical plane anchored at bottom)
+        this.billboardGeometry = new THREE.PlaneGeometry(1, 1);
+        this.billboardGeometry.translate(0, 0.5, 0);
     }
 
     // NEW: helper to load icons for label timer indicator
@@ -334,28 +338,47 @@ export class ThreeRenderer {
     }
 
     createOrUpdateSprite(id, type, x, y, z, image, scale = 1) {
-        let sprite = this.sprites.get(id);
+        let mesh = this.sprites.get(id);
         const tex = this.getTexture(image);
         
-        if (!sprite) {
-            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.5 });
-            sprite = new THREE.Sprite(mat);
-            sprite.center.set(0.5, 0); // Anchor at bottom center
-            this.scene.add(sprite);
-            this.sprites.set(id, sprite);
+        // Transition from Sprite (old) to Mesh (new) if needed
+        if (!mesh || !mesh.isMesh) {
+            if (mesh) {
+                this.scene.remove(mesh);
+                if (mesh.geometry) mesh.geometry.dispose();
+                if (mesh.material) mesh.material.dispose();
+            }
+            
+            const mat = new THREE.MeshLambertMaterial({ 
+                map: tex, 
+                transparent: true, 
+                alphaTest: 0.5,
+                side: THREE.DoubleSide 
+            });
+            mesh = new THREE.Mesh(this.billboardGeometry, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            this.scene.add(mesh);
+            this.sprites.set(id, mesh);
         }
 
         // Update Texture
-        if (sprite.material.map !== tex) {
-            sprite.material.map = tex;
+        if (mesh.material.map !== tex) {
+            mesh.material.map = tex;
+            mesh.material.needsUpdate = true;
         }
 
         // Position
-        sprite.position.set(x, z, y); // Game Y -> 3D Z, Game Z (height) -> 3D Y
-        sprite.scale.set(scale, scale, 1);
+        // We anchor at exactly 'z' now (terrain height), because the geometry is anchored at bottom (y=0).
+        mesh.position.set(x, z, y); 
+        mesh.scale.set(scale, scale, scale);
         
-        // Mark as seen this frame (use frameId instead of timestamp)
-        sprite.userData.lastFrameId = this.frameId;
+        // Y-Axis Billboard Rotation: Face the camera but stay vertical
+        // This prevents the "tilting back" effect of standard Sprites and keeps the base planted.
+        mesh.lookAt(this.camera.position.x, mesh.position.y, this.camera.position.z);
+        
+        // Mark as seen this frame
+        mesh.userData.lastFrameId = this.frameId;
     }
     
     createOrUpdatePlayer(player) {
@@ -467,14 +490,14 @@ export class ThreeRenderer {
                 const z = map.getHeight(x + 0.5, y + 0.5);
                 
                 if (tile === TILE_TYPE.TREE) {
-                    // Lift tree slightly (0.25) to prevent base clipping/z-fighting with terrain
-                    this.createOrUpdateSprite(`t_${x}_${y}`, 'tree', x + 0.5, y + 0.5, z + 0.25, map.treeTile, 1.5);
+                    // Anchored at bottom, so we place exactly at z
+                    this.createOrUpdateSprite(`t_${x}_${y}`, 'tree', x + 0.5, y + 0.5, z, map.treeTile, 1.5);
                 } else if (tile === TILE_TYPE.LOGS) {
-                    this.createOrUpdateSprite(`l_${x}_${y}`, 'logs', x + 0.5, y + 0.5, z + 0.05, map.logsTile, 1);
+                    this.createOrUpdateSprite(`l_${x}_${y}`, 'logs', x + 0.5, y + 0.5, z, map.logsTile, 1);
                 } else if (tile === TILE_TYPE.BUSHES) {
-                    this.createOrUpdateSprite(`b_${x}_${y}`, 'bushes', x + 0.5, y + 0.5, z + 0.1, map.bushesTile, 1);
+                    this.createOrUpdateSprite(`b_${x}_${y}`, 'bushes', x + 0.5, y + 0.5, z, map.bushesTile, 1);
                 } else if (tile === TILE_TYPE.FLOWER_PATCH) {
-                     this.createOrUpdateSprite(`f_${x}_${y}`, 'flowers', x + 0.5, y + 0.5, z + 0.05, map.flowerPatchTile, 0.8);
+                     this.createOrUpdateSprite(`f_${x}_${y}`, 'flowers', x + 0.5, y + 0.5, z, map.flowerPatchTile, 0.8);
                 }
             }
         }
