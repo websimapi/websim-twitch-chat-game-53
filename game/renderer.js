@@ -370,7 +370,12 @@ export class ThreeRenderer {
 
         // Position
         // We anchor at exactly 'z' now (terrain height), because the geometry is anchored at bottom (y=0).
-        mesh.position.set(x, z, y); 
+        // Slightly sink non-tree props so they visually touch the terrain mesh.
+        let yOffset = 0;
+        if (type === 'logs' || type === 'bushes' || type === 'flowers') {
+            yOffset = -0.02;
+        }
+        mesh.position.set(x, z + yOffset, y); 
         mesh.scale.set(scale, scale, scale);
         
         // Y-Axis Billboard Rotation: Face the camera but stay vertical
@@ -407,7 +412,9 @@ export class ThreeRenderer {
 
         // Use map height as Y (3D up) so player follows terrain
         const z = player.z || 0;
-        mesh.position.set(player.pixelX, z + 0.5, player.pixelY);
+        const sphereRadius = 0.4;
+        // Place sphere so its bottom exactly touches the terrain mesh
+        mesh.position.set(player.pixelX, z + sphereRadius, player.pixelY);
         mesh.userData.lastFrameId = this.frameId;
 
         // --- Label sprite above player ---
