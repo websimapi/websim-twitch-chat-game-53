@@ -137,19 +137,28 @@ export class Entities3D {
 
         if (renderKind === 'ground') {
             // Conform the quad to the terrain height mesh:
-            // sample height at each corner of the 1x1 tile area.
+            // sample height at each corner of the 1x1 tile area, slightly inset so it
+            // stays visually inside the tile and hugs the mesh without hovering.
             const posAttr = mesh.geometry.attributes.position;
             const vertexCount = posAttr.count;
-            const yOffset = 0.03; // slight lift to avoid z-fighting with terrain
+            const yOffset = 0.01; // very small lift to avoid z-fighting with terrain
+            const insetFactor = 0.9; // keep quad slightly inside the tile bounds
 
             for (let i = 0; i < vertexCount; i++) {
-                const localX = posAttr.getX(i); // in range [-0.5, 0.5]
-                const localZ = posAttr.getZ(i); // in range [-0.5, 0.5]
+                let localX = posAttr.getX(i); // in range [-0.5, 0.5]
+                let localZ = posAttr.getZ(i); // in range [-0.5, 0.5]
+
+                // Slightly inset the quad so edge vertices don't hang off steep borders
+                localX *= insetFactor;
+                localZ *= insetFactor;
+
                 const worldX = x + localX;
                 const worldZ = y + localZ;
 
                 const terrainH = map.getHeight(worldX, worldZ) + yOffset;
                 posAttr.setY(i, terrainH);
+                posAttr.setX(i, localX);
+                posAttr.setZ(i, localZ);
             }
             posAttr.needsUpdate = true;
             mesh.geometry.computeVertexNormals();
