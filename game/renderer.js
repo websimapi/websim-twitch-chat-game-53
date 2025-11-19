@@ -338,7 +338,7 @@ export class ThreeRenderer {
         const tex = this.getTexture(image);
         
         if (!sprite) {
-            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.5 });
             sprite = new THREE.Sprite(mat);
             sprite.center.set(0.5, 0); // Anchor at bottom center
             this.scene.add(sprite);
@@ -467,13 +467,14 @@ export class ThreeRenderer {
                 const z = map.getHeight(x + 0.5, y + 0.5);
                 
                 if (tile === TILE_TYPE.TREE) {
-                    this.createOrUpdateSprite(`t_${x}_${y}`, 'tree', x + 0.5, y + 0.5, z, map.treeTile, 1.5);
+                    // Lift tree slightly (0.25) to prevent base clipping/z-fighting with terrain
+                    this.createOrUpdateSprite(`t_${x}_${y}`, 'tree', x + 0.5, y + 0.5, z + 0.25, map.treeTile, 1.5);
                 } else if (tile === TILE_TYPE.LOGS) {
-                    this.createOrUpdateSprite(`l_${x}_${y}`, 'logs', x + 0.5, y + 0.5, z, map.logsTile, 1);
+                    this.createOrUpdateSprite(`l_${x}_${y}`, 'logs', x + 0.5, y + 0.5, z + 0.05, map.logsTile, 1);
                 } else if (tile === TILE_TYPE.BUSHES) {
-                    this.createOrUpdateSprite(`b_${x}_${y}`, 'bushes', x + 0.5, y + 0.5, z, map.bushesTile, 1);
+                    this.createOrUpdateSprite(`b_${x}_${y}`, 'bushes', x + 0.5, y + 0.5, z + 0.1, map.bushesTile, 1);
                 } else if (tile === TILE_TYPE.FLOWER_PATCH) {
-                     this.createOrUpdateSprite(`f_${x}_${y}`, 'flowers', x + 0.5, y + 0.5, z, map.flowerPatchTile, 0.8);
+                     this.createOrUpdateSprite(`f_${x}_${y}`, 'flowers', x + 0.5, y + 0.5, z + 0.05, map.flowerPatchTile, 0.8);
                 }
             }
         }
