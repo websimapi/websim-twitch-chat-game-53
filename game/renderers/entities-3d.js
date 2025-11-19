@@ -137,10 +137,11 @@ export class Entities3D {
 
         if (renderKind === 'ground') {
             // Conform the quad exactly to the terrain height mesh:
-            // sample height at each corner of the 1x1 tile area.
+            // sample height at each corner of the 1x1 tile area,
+            // then lift very slightly to avoid z-fighting with the terrain mesh.
             const posAttr = mesh.geometry.attributes.position;
             const vertexCount = posAttr.count;
-            const yOffset = 0.0; // no artificial lift – sits directly on the terrain mesh
+            const yOffset = 0.02; // small lift above terrain for seamless “on top” rendering
 
             for (let i = 0; i < vertexCount; i++) {
                 const localX = posAttr.getX(i); // in range [-0.5, 0.5]
