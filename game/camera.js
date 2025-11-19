@@ -57,8 +57,8 @@ export class Camera {
 
         // Vertical orbit (pitch)
         if (deltaY !== 0) {
-            // Dragging up (negative deltaY) should look more down at the target (increase pitch)
-            this.pitch += (-deltaY) * pitchSensitivity;
+            // Dragging up (negative deltaY) should look more UP at the target (decrease pitch)
+            this.pitch += deltaY * pitchSensitivity;
             // Clamp pitch to avoid flipping or going too flat
             this.pitch = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitch));
         }
