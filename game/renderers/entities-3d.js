@@ -116,12 +116,21 @@ export class Entities3D {
                 geometry = this.billboardGeometry;
             }
 
-            const mat = new THREE.MeshLambertMaterial({ 
+            const matOptions = { 
                 map: tex, 
                 transparent: true, 
                 alphaTest: 0.5,
-                side: THREE.DoubleSide 
-            });
+                side: THREE.DoubleSide
+            };
+
+            // Use polygonOffset for ground items to prevent z-fighting and ensure they sit "on top" of the terrain
+            if (renderKind === 'ground') {
+                matOptions.polygonOffset = true;
+                matOptions.polygonOffsetFactor = -1.0; // Pull forward
+                matOptions.polygonOffsetUnits = -4.0;
+            }
+
+            const mat = new THREE.MeshLambertMaterial(matOptions);
             mesh = new THREE.Mesh(geometry, mat);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -136,12 +145,12 @@ export class Entities3D {
         }
 
         if (renderKind === 'ground') {
-            // Conform the quad exactly to the terrain height mesh:
-            // sample height at each corner of the 1x1 tile area,
-            // then lift very slightly to avoid z-fighting with the terrain mesh.
+            // Conform the quad to the terrain height mesh:
+            // sample height at each corner of the 1x1 tile area.
             const posAttr = mesh.geometry.attributes.position;
             const vertexCount = posAttr.count;
-            const yOffset = 0.02; // small lift above terrain for seamless “on top” rendering
+            // No physical lift; rely on polygonOffset for visual layering
+            const yOffset = 0.0; 
 
             for (let i = 0; i < vertexCount; i++) {
                 const localX = posAttr.getX(i); // in range [-0.5, 0.5]
@@ -155,21 +164,19 @@ export class Entities3D {
             posAttr.needsUpdate = true;
             mesh.geometry.computeVertexNormals();
 
-            // Ground mesh position: center over the tile in XZ, Y is encoded in vertices
+            // Ground mesh position: center over the tile in XZ, Y handled in vertices
             mesh.position.set(x, 0, y);
-            // Scale in X/Z only; Y comes from vertex heights
-            mesh.scale.set(scale, 1, scale);
         } else {
             // Position:
             // X/Z are map coordinates, Y is height from terrain
             let yOffset = 0;
             if (logicalType === 'logs' || logicalType === 'bushes' || logicalType === 'flowers') {
+                // This branch is now technically unused for logs/bushes/flowers as they are 'ground',
+                // but kept for safety if types change.
                 yOffset = -0.02;
             }
 
             mesh.position.set(x, height + yOffset, y);
-
-            // Standing sprites use uniform scale
             mesh.scale.set(scale, scale, scale);
 
             // Orientation:
@@ -179,6 +186,11 @@ export class Entities3D {
             } else {
                 mesh.rotation.set(0, 0, 0);
             }
+        }
+
+        // For standing sprites, ensure scale is set (ground quads use native 1x1 tile size)
+        if (renderKind === 'standing') {
+            mesh.scale.set(scale, scale, scale);
         }
 
         mesh.userData.lastFrameId = frameId;
